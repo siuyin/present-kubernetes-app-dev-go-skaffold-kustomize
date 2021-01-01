@@ -1,0 +1,61 @@
+# Kubernetes app development
+with Go, Skaffold and Kustomize
+1 Jan 2021
+
+Loh Siu Yin
+Engineering Manager
+siuyin@xendit.co
+
+## Contents
+- A "hello world" Go application / service.
+- Configuration environment variables.
+- Secret environment variables.
+- Volume mounts to read/write files.
+- Creating the app container image.
+- Deployment to Kubernetes with Skaffold.
+- Customisation to Staging, Production etc.
+ environments with Kustomize.
+
+## Hello World
+cmd/hello/main.go:
+
+.code cmd/hello/main.go  /^func main/,/^}/
+
+Let's look at `displayFileContents`.
+
+## displayFileContents
+
+.code cmd/hello/main.go  /^func displayFileContents/,/^}/
+
+Let's run our hello world service with its default configuration and secrets:
+```
+go run cmd/hello/main.go
+```
+
+## Configuration and Secrets
+
+ .gitignore:
+
+.code .gitignore
+
+local.env:
+
+.code local.env
+
+local.secret.env:
+
+.code local.secret.env
+
+Let's export the configuration and secrets files
+into the environment.
+Then run our service again.
+```
+ . local.env
+ . local.secret.env
+
+go run cmd/hello/main.go
+```
+
+## Presentation and code download
+
+
