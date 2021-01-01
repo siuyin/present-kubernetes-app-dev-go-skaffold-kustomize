@@ -1,0 +1,16 @@
+apiVersion: skaffold/v2beta5
+kind: Config
+build:
+  artifacts:
+  - image: siuyin/junk
+    context: .
+deploy:
+  kustomize:
+    paths:
+    - kube/base
+profiles:
+- name: staging
+  deploy:
+    kustomize:
+      paths:
+      - kube/overlays/staging

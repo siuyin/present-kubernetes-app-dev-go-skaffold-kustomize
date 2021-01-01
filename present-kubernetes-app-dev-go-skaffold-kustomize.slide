@@ -439,7 +439,7 @@ Kustomize is my preferred tool to address concerns 2 and 3.
 ## Image tagging
 Before we talk about skaffold and kustomize, let's
 manually make a small change to our hello world service
-and tag is as v0.1.1 .
+and tag it as v0.1.1 .
 
 cmd/hello/main.go:
 
@@ -572,6 +572,72 @@ kubectl delete -k kube/overlays/staging
 ```
 
 ## Take a break: Check that you understand how to Kustomize for different environments.
+
+## Continuous Integration / Continuous Deployment with Skaffold
+Skaffold [https://skaffold.dev/](https://skaffold.dev/) is not only a CI/CD tool,
+it is also a continuous development tool.
+
+We start by creating a skaffold.yaml file
+
+.code skaffold.yaml /apiVersion/,/kube\/base/
+
+Note we deploy with kustomize. This requires the standalone
+kustomize binary.
+
+## Deploy, Update, Re-deploy with skaffold run
+```
+skaffold run
+kubectl get svc,pod -l app=hello
+curl 192.168.1.68:{node port}/
+```
+
+Then edit cmd/hello/main.go and skaffold run again.
+
+## Redeploying infrastructure
+Issue the command: "skaffold run" to unconditionally
+redeploy the infrastructure.
+
+The previous infrastructure will be destroyed and
+new infrastructure will be recreated and deployed.
+
+If you want skaffold to recreate only infrastructure that has
+changed, use this command variant:
+```
+SKAFFOLD_LABEL=skaffold.dev/run-id={unique id} skaffold run
+
+```
+
+## Idempotent skaffold: iskaffold.sh
+
+I have a script (iskaffold.sh) for idempotent skaffold:
+
+  ```
+  #!/bin/sh
+  # idempotent skaffold
+  
+  # This environment variable is needed to make skaffold idempotent again.
+  # Otherwise resources are recreated on each run as the run-id changes.
+  
+  SKAFFOLD_LABEL=skaffold.dev/run-id=siuyin skaffold "$@"
+  ```
+
+And I use it thus to idempotently deploy my infrastructure:
+```
+iskaffold.sh run
+```
+
+## Deploy to staging:
+```
+iskaffold.sh run -p staging
+kubectl get svc,pod -l app=hello-staging
+curl 192.168.1.68:{node port}/
+```
+
+## Tear down resources:
+```
+iskaffold.sh delete
+iskaffold.sh delete -p staging
+```
 
 ## Presentation and code download
 
