@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello
+  labels:
+    app: hello
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: hello
+  template:  # pod template follows
+    metadata:
+      labels:
+        app: hello
+    spec:
+      containers:
+      - name: hello
+        image: siuyin/junk
+        envFrom:
+        - configMapRef:
+            name: hello-config
+        - secretRef:
+            name: hello-secret
+        volumeMounts:
+        - name: data-vol
+          mountPath: /testdata
+      volumes:
+      - name: data-vol
+        hostPath:
+          path: /home/siuyin/testdata
+      terminationGracePeriodSeconds: 0

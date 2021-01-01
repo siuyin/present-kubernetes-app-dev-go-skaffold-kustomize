@@ -138,6 +138,10 @@ $ kubectl get nodes
 NAME   STATUS   ROLES    AGE    VERSION
 ln02   Ready    <none>   223d   v1.20.0-37+7ab055a22f5440
 
+## Simplified view of kubernetes
+
+[![](https://mermaid.ink/img/eyJjb2RlIjoiZmxvd2NoYXJ0IFREXG5rYihLdWJlcm5ldGVzIENvbnRyb2xsZXIpXG5rYyhrdWJlY3RsKVxua2MtLT58Y2FsbHMgQVBJfGtiXG5rYi0tPnN2KHNlcnZpY2UgY29udHJvbGxlcjpcXG5jb25maWd1cmVzIG5ldHdvcmtpbmcpXG5rYi0tPmRwKGRlcGxveW1lbnQgY29udHJvbGxlcilcbmRwPC0tPmtsKGt1YmVsZXQgb24gbm9kZSAxKVxuZHA8LS0-a2xuKGt1YmVsZXQgb24gbm9kZSBuKVxua2xuLS0-fGNyZWF0ZXMvZGVzdHJveXN8cGQocG9kcyBvbiBub2RlIG4pIiwibWVybWFpZCI6e30sInVwZGF0ZUVkaXRvciI6ZmFsc2V9)](https://mermaid-js.github.io/mermaid-live-editor/#/edit/eyJjb2RlIjoiZmxvd2NoYXJ0IFREXG5rYihLdWJlcm5ldGVzIENvbnRyb2xsZXIpXG5rYyhrdWJlY3RsKVxua2MtLT58Y2FsbHMgQVBJfGtiXG5rYi0tPnN2KHNlcnZpY2UgY29udHJvbGxlcjpcXG5jb25maWd1cmVzIG5ldHdvcmtpbmcpXG5rYi0tPmRwKGRlcGxveW1lbnQgY29udHJvbGxlcilcbmRwPC0tPmtsKGt1YmVsZXQgb24gbm9kZSAxKVxuZHA8LS0-a2xuKGt1YmVsZXQgb24gbm9kZSBuKVxua2xuLS0-fGNyZWF0ZXMvZGVzdHJveXN8cGQocG9kcyBvbiBub2RlIG4pIiwibWVybWFpZCI6e30sInVwZGF0ZUVkaXRvciI6ZmFsc2V9)
+
 ## Create a kubernetes service
 A kubernetes service acts like a load-balancer to connect the outside
 world to "pods" running inside kubernetes.
@@ -359,6 +363,79 @@ and hello-secret.
    ```
 
 ## Take a break: Check that you understand how kubernetes configmaps and secrets work with deployments.
+
+## Kubernetes volumes and volume mounts
+A kubernetes volume is a piece of storage.
+A volume mount is the location inside of a pod where that storage is mounted.
+
+See [https://kubernetes.io/docs/concepts/storage/volumes/](https://kubernetes.io/docs/concepts/storage/volumes/)
+for details.
+
+Volume and volumeMounts are declared within a pod template of a deployment.
+
+## kube/hello-deployment-vol.yaml
+
+.code kube/hello-deployment-vol.yaml /^ {4}spec/,/^ {10}path/
+
+`hostPath` volumes only work for single-node clusters like my development cluster.
+
+In production we would use awsElasticBlockStore or gcePersistentDisk volumes.
+
+## Test deployment with volume mounted
+
+1. Make sure the old deployment is deleted.
+   ```
+   kubectl delete deploy -l app=hello
+   kubectl get deploy -l app=hello
+   ```
+
+1. Deploy our new deployment with volume mounts.
+   ```
+   kubectl apply -f kube/hello-deployment-vol.yaml
+   kubectl get deploy -l app=hello
+   ```
+
+1. Get node port and test service.
+   ```
+   kubectl get svc -l app=hello
+   curl 192.168.1.68:{node port}/
+   ```
+
+ 1. Change the contents of the /home/siuyin/testdata/myfile.txt and re-test.
+
+## Development process summarised
+1. Write the hello world service code.
+1. Create, tag and push a Docker image into an image registry.
+1. Create a kubernetes service to act like a load-balancer between
+ the outside world and kubernetes pods.
+1. Create and apply kubernetes configMap(s) and/or secret(s).
+1. Create and apply a kubernetes deployment which
+ references:
+   1. configMap(s)
+   1. secret(s)
+   1. volume(s) and volumeMount(s)
+
+## Take a break: Congratulate yourself, you have covered kubernetes 101!
+
+## Reality check: Production requirements
+
+1. The docker images must be tagged with something meaningful
+ and not siuyin/junk. Eg. siuyin/myapp:1.0.3
+ or siuyin/myapp:6daef3ab (git commit tag).
+
+1. Our deployment names should be something like
+ hello-dev, hello-staging, hello-prod instead of just hello
+ to reflect the different environments.
+
+1. We must have a systematic, sustainable
+ way of customising our configMaps,
+ secrets, volumes and volumeMounts to accommodate
+ staging, prod etc. environments.
+
+Skaffold is a tool I use to address concern 1.
+
+Kustomize is my preferred tool to address concerns 2 and 3.
+
 
 ## Presentation and code download
 
