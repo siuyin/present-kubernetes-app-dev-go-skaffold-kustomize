@@ -85,15 +85,15 @@ docker build -t junk .
 
 ## Running the docker image
 
-The:
-1. --rm is to remove the container after the run end.
-1. -it: -i is to create an interactive session and -t to allocate a terminal.
-1. -P is to allocate a port(s) on your local machine to connect to the docker instance's
- exported port(s) running "inside" the docker environment.
-
 ```
 docker run --rm -it -P junk
 ``` 
+
+The:
+1. --rm is to remove the container after the run ends.
+1. -it: -i is to create an interactive session and -t to allocate a terminal.
+1. -P is to allocate a port(s) on your local machine to connect to the docker instance's
+ exposed port(s) running "inside" the docker environment.
 
 ## Testing the docker container instance
 
@@ -191,6 +191,174 @@ A NodePort service type means kubernetes will allocate a port on my local machin
 
 This port is connected to the service running inside kubernetes.
 
+## kubernetes pods
+A kubernetes pod is roughly equivalent to a docker container.
+
+See [https://kubernetes.io/docs/concepts/workloads/pods/](https://kubernetes.io/docs/concepts/workloads/pods/)
+for details.
+
+Running an unmanaged pod directly on kubernetes is *not* recommended.
+If a pod fails, kubernetes will not restart it.
+
+## For educational purpose only: Create a kubernetes pod
+For educational purposes *only*, I will create the hello service to
+run as a pod in kubernetes.
+
+kube/hello-pod.yaml:
+
+.code kube/hello-pod.yaml
+
+## pod: labels, image and resources
+
+**labels**:
+```
+app: hello
+```
+The hello service uses this label to find the pod and connect to it.
+The service is the "load-balancer" and the pod is the "backend".
+
+**image**: tells kubernetes which image to use.
+I first had to push the image to docker hub (or the image registry of your choice).
+```
+docker tag junk siuyin/junk
+docker push siuyin/junk
+```
+
+**resources**: tells kubernetes the memory and CPU requirements
+for running the pod.
+
+## Testing the hello service on kubernetes
+
+1. Ask kubernetes to create the pod
+   ```
+   kubectl apply -f kube/hello-pod.yaml
+   kubectl get pods -l app=hello
+   ```
+
+1. Find the node port
+   ```
+   kubectl get svc -l app=hello
+   ```
+
+1. Test the hello-service
+   ```
+   curl 192.168.1.68:{node port}/
+   ```
+
+1. Delete the pod and retest.
+   ```
+   kubectl delete po --force
+   curl 192.168.1.68:{node port}/
+   ```
+
+Kubernetes does *not* re-create a failed or terminated pod.
+
+The kubernetes hello service will not have a backend pod
+to connect to when the pod fails.
+
+## Take a break: Check that you understand how kubernetes services and pods work.
+
+## kubernetes deployments
+When we deploy a pod directly into kubernetes, kubernetes does not re-create
+or restart the pod if it fails.
+
+A kubernetes deployment *will* re-create pods that fail.  
+See [https://kubernetes.io/docs/concepts/workloads/controllers/deployment/](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/)
+for details.
+
+This is the recommended way to deploy pods into kubernetes.
+
+## kube/hello-deployment.yaml
+
+.code kube/hello-deployment-basic.yaml
+
+## deployment / label, spec selector and spec template
+Let's ask kubernetes to run implement this deployment:
+```
+kubectl apply -f kube/hello-deployment-basic.yaml
+kubectl get po -l app=hello
+```
+```
+kubectl scale deploy hello --replicas=5
+```
+
+- The deployment label is to allow kubectl to find the deployment
+   ```
+   kubectl get deploy -l app=hello
+   ```
+
+- The deployment spec / selector works the same way as a service selector.
+
+- A deployment selector looks for pods with matching labels
+for the deployment to manage.
+
+- Note that we do not need kube/hello-pod.yaml anymore.
+
+- Instead we place the pod `template` into the deployment yaml itself.
+
+## Configuration maps for deployments
+See [https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/](https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/)
+for details.
+
+kube/hello-configmap.yaml:
+
+.code kube/hello-configmap.yaml
+
+Let's install this configuration map into kubernetes.
+```
+kubectl apply -f kube/hello-config.yaml
+kubectl get configmap -l app=hello
+
+## Secrets for deployments
+A kubernetes secret is like your local.secret.env file.
+It is *not* encrypted.
+All kubernetes does is provide extra access restrictions
+for kubernetes secrets.
+
+See [https://kubernetes.io/docs/concepts/configuration/secret/](https://kubernetes.io/docs/concepts/configuration/secret/)
+for details.
+
+
+kube/hello-secrt.yaml (purposely misspelled to avoid .gitignore):
+
+.code kube/hello-secrt.yaml
+
+Let's install this secret into kubernetes:
+```
+kubectl apply -f kube/hello-secrt.yaml
+kubectl get secrets -l app=hello
+```
+
+## Deployment with configmap and secrets
+
+kube/hello-deployment-env.yaml:
+
+.code kube/hello-deployment-env.yaml /^ {4}spec/,/^ {6}termination/
+
+Notice the envFrom section. This points to hello-config
+and hello-secret.
+
+## Test configured/customised deployment
+
+1. Make sure the old basic deployment is deleted.
+   ```
+   kubectl delete deploy -l app=hello
+   kubectl get deploy -l app=hello
+   ```
+
+1. Deploy our new deployment with env.
+   ```
+   kubectl apply -f kube/hello-deployment-env.yaml
+   kubectl get deploy -l app=hello
+   ```
+
+1. Get node port and test service.
+   ```
+   kubectl get svc -l app=hello
+   curl 192.168.1.68:{node port}/
+   ```
+
+## Take a break: Check that you understand how kubernetes configmaps and secrets work with deployments.
 
 ## Presentation and code download
 

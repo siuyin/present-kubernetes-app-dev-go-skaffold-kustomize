@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hello
+  labels:
+    app: hello
+spec:
+  containers:
+  - name: hello
+    image: siuyin/junk
+    resources:
+      limits:
+        memory: "200Mi"
+        cpu: "700m"
+      requests:
+        memory: "1Mi"
+        cpu: "10m"
+  terminationGracePeriodSeconds: 0
