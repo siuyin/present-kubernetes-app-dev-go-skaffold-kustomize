@@ -46,9 +46,12 @@ local.secret.env:
 
 .code local.secret.env
 
+## Running hello service locally
+
 Let's export the configuration and secrets files
 into the environment.
-Then run our service again.
+
+Then run our service.
 ```
  . local.env
  . local.secret.env
@@ -56,6 +59,139 @@ Then run our service again.
 go run cmd/hello/main.go
 ```
 
+## Take a break: Check that you understand how to configure and run a service locally.
+
+## Containerising our service
+
+[![](https://mermaid.ink/img/eyJjb2RlIjoiZmxvd2NoYXJ0IFREXG5kZihEb2NrZXJmaWxlKS0tPnxkb2NrZXIgYnVpbGQgLXQgbXlUYWdnZWRJbWFnZSAufGJ0KEJ1aWx0IGFuZCB0YWdnZWQgZG9ja2VyIGltYWdlKVxuYnQtLT58ZG9ja2VyIHJ1biAtLXJtIC1pdCAtUCBteVRhZ2dlZEltYWdlfHJ1bihDcmVhdGVkIGNvbnRhaW5lciBmcm9tIGltYWdlIGFuZCByYW4gaXQpIiwibWVybWFpZCI6e30sInVwZGF0ZUVkaXRvciI6ZmFsc2V9)](https://mermaid-js.github.io/mermaid-live-editor/#/edit/eyJjb2RlIjoiZmxvd2NoYXJ0IFREXG5kZihEb2NrZXJmaWxlKS0tPnxkb2NrZXIgYnVpbGQgLXQgbXlUYWdnZWRJbWFnZSAufGJ0KEJ1aWx0IGFuZCB0YWdnZWQgZG9ja2VyIGltYWdlKVxuYnQtLT58ZG9ja2VyIHJ1biAtLXJtIC1pdCAtUCBteVRhZ2dlZEltYWdlfHJ1bihDcmVhdGVkIGNvbnRhaW5lciBmcm9tIGltYWdlIGFuZCByYW4gaXQpIiwibWVybWFpZCI6e30sInVwZGF0ZUVkaXRvciI6ZmFsc2V9)
+
+## Dockerfile
+Dockerfile:
+
+.code Dockerfile
+
+## Building the docker image
+
+Below, I am tagging my image "junk" because this is
+a throw-away development image only used for
+demo purposes.
+
+Note the `.` in the command. This tells docker to look
+for a Dockerfile in the current directory.
+
+```
+docker build -t junk .
+```
+
+## Running the docker image
+
+The:
+1. --rm is to remove the container after the run end.
+1. -it: -i is to create an interactive session and -t to allocate a terminal.
+1. -P is to allocate a port(s) on your local machine to connect to the docker instance's
+ exported port(s) running "inside" the docker environment.
+
+```
+docker run --rm -it -P junk
+``` 
+
+## Testing the docker container instance
+
+1. Determine which port was allocated on my local machine
+ when a container was created from the "junk" image.
+   ```
+   docker ps | grep junk
+   ```
+
+1. Test the service. 192.168.1.68 is the IP of my local development machine.
+   ```
+   curl 192.168.1.68:{port}/
+   ```
+
+## Take a break: Check that you understand how to containerise an application.
+
+## Kubernetes essentials
+
+## Install kubernetes
+Options:
+1. Docker Desktop: See https://www.docker.com/products/kubernetes
+
+1. kind (kubernetes in docker): See https://kubernetes.io/docs/tasks/tools/#kind
+
+1. Minikube: See https://kubernetes.io/docs/tasks/tools/#minikube
+
+1. microk8s: See https://microk8s.io/
+
+## Install kubectl
+kubectl controls your kubernetes cluster. Install it if your
+kubernetes distribution does not already provide it.
+
+Get it from: https://kubernetes.io/docs/tasks/tools/install-kubectl/
+
+Check the connection to your kubernetes cluster:
+```
+$ kubectl cluster-info
+Kubernetes master is running at https://192.168.1.68:16443
+CoreDNS is running at https://192.168.1.68:16443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+
+$ kubectl get nodes
+NAME   STATUS   ROLES    AGE    VERSION
+ln02   Ready    <none>   223d   v1.20.0-37+7ab055a22f5440
+
+## Create a kubernetes service
+A kubernetes service acts like a load-balancer to connect the outside
+world to "pods" running inside kubernetes.
+
+See [https://kubernetes.io/docs/concepts/services-networking/service/](https://kubernetes.io/docs/concepts/services-networking/service/)
+for details.
+
+## kube/hello-service.yaml:
+
+.code kube/hello-service.yaml
+
+Note the label key/value pair:
+```
+app: hello
+```
+
+We will use this label to "find" this service later.
+
+## Ask kubernetes to create or update the service
+
+`kubectl apply -f` will:
+1. read the yaml file(s) and  
+
+1. send it to the kubernetes controller
+
+The kubernetes controller will then:
+1. read the `declarations` in the file and
+1. make the kubernetes environment match what was
+ declared.
+```
+kubectl apply -f kube/hello-service.yaml
+kubectl get services -l app=hello
+```
+
+Because of kubernetes declarative nature, `kubectl apply` is idempotent.
+Try running it a second or third time.
+
+## kubernetes service type: NodePort
+When we run:
+```
+kubectl get services -l app=hello
+```
+we see the type to be NodePort.
+
+There a several types of kubernetes services.
+
+See [https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types](https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types).
+
+A NodePort service type means kubernetes will allocate a port on my local machine
+(and on all nodes in the kubernetes cluster).
+
+This port is connected to the service running inside kubernetes.
+
+
 ## Presentation and code download
 
-
+.link https://github.com/siuyin/present-kubernetes-app-dev-go-skaffold-kustomize

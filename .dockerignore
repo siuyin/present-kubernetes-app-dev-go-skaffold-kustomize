@@ -1,0 +1,4 @@
+*.swp
+*secret*
+.git
+*.slide
