@@ -582,7 +582,7 @@ We start by creating a skaffold.yaml file
 .code skaffold.yaml /apiVersion/,/kube\/base/
 
 Note we deploy with kustomize. This requires the standalone
-kustomize binary.
+kustomize binary to be available in your PATH.
 
 ## Deploy, Update, Re-deploy with skaffold run
 ```
