@@ -12,9 +12,9 @@ siuyin@xendit.co
 - Secret environment variables.
 - Volume mounts to read/write files.
 - Creating the app container image.
-- Deployment to Kubernetes with Skaffold.
 - Customisation to Staging, Production etc.
  environments with Kustomize.
+- Deployment to Kubernetes with Skaffold.
 
 ## Hello World
 cmd/hello/main.go:
@@ -30,7 +30,9 @@ Let's look at `displayFileContents`.
 Let's run our hello world service with its default configuration and secrets:
 ```
 go run cmd/hello/main.go
+curl 192.168.1.68:8080
 ```
+192.168.1.68 is the IP address of my computer.
 
 ## Configuration and Secrets
 
@@ -57,6 +59,7 @@ Then run our service.
  . local.secret.env
 
 go run cmd/hello/main.go
+curl 192.168.1.68:8080
 ```
 
 ## Take a break: Check that you understand how to configure and run a service locally.
@@ -251,7 +254,7 @@ for running the pod.
 
 1. Delete the pod and retest.
    ```
-   kubectl delete po --force
+   kubectl delete po hello --force
    curl 192.168.1.68:{node port}/
    ```
 
@@ -310,7 +313,7 @@ kube/hello-configmap.yaml:
 
 Let's install this configuration map into kubernetes.
 ```
-kubectl apply -f kube/hello-config.yaml
+kubectl apply -f kube/hello-configmap.yaml
 kubectl get configmap -l app=hello
 
 ## Secrets for deployments

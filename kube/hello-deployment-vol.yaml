@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: hello
-        image: siuyin/junk:v0.1.1 # empty tag defaults to 'latest' tag
+        image: siuyin/junk # empty tag defaults to 'latest' tag
         envFrom:
         - configMapRef:
             name: hello-config
