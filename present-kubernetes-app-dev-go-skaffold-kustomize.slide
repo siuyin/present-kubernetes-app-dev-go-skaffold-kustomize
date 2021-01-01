@@ -436,7 +436,145 @@ Skaffold is a tool I use to address concern 1.
 
 Kustomize is my preferred tool to address concerns 2 and 3.
 
+## Image tagging
+Before we talk about skaffold and kustomize, let's
+manually make a small change to our hello world service
+and tag is as v0.1.1 .
+
+cmd/hello/main.go:
+
+.code cmd/hello/main.go /http.HandleFunc/,/^\t}\)/
+
+```
+docker build -t siuyin/junk:v0.1.1 .
+docker push siuyin/junk:v0.1.1
+```
+
+## Update kubernetes deployment
+
+kube/hello-deployment-vol.yaml:
+update siuyin/junk to siuyin/junk:v0.1.1
+
+.code kube/hello-deployment-vol.yaml /^ {6}containers/,/^ {8}image/
+
+Update and check the deployment:
+```
+kubectl apply -f kube/hello-deployment-vol.yaml
+kubectl get svc -l app=hello
+curl 192.168.1.68:{node port}/
+```
+
+Now let us talk about customising for different environments.
+
+## Kustomize
+kustomize v2.0.3 is built into kubectl version 1.14 and above.
+see [https://github.com/kubernetes-sigs/kustomize](https://github.com/kubernetes-sigs/kustomize).
+
+```
+kubectl help kustomize
+
+```
+
+kustomize is also available as a standalone binary
+available for Linux, Mac and Windows.
+
+Use the standalone binary if you want the latest features (currently at v3.9.1 as at 2021-01-01).
+
+```
+kustomize version
+```
+
+## Customisation base folder
+We start by creating a "base" folder to hold the starting
+point of customisations.
+
+```
+cd kube
+mkdir base
+cp hello-service.yaml hello-configmap.yaml hello-secrt.yaml hello-deployment base
+```
+
+
+Now we create
+kube/base/kustomization.yaml:
+
+.code kube/base/kustomization.yaml
+
+## Apply our kustomization and test
+Apply our kustomization with kubectl apply -k (note -k and not -f):
+```
+kubectl apply -k kube/base
+kubectl get pod,svc -l app=hello
+curl 192.168.1.68:{node port}/
+```
+
+## Customize for staging environment
+Requirements
+1. image: siuyin/junk  (note the absence of the version tag)
+1. names should be "hello-staging" and not just "hello"
+
+
+We make a folder to hold our kustomization.yaml
+```
+mkdir -p kube/overlays/staging
+```
+
+## kube/overlays/staging/kustomization.yaml
+
+kube/overlays/staging/kustomization.yaml:
+
+.code kube/overlays/staging/kustomization.yaml /apiVersion/,/\/base/
+
+1. We start customising by adding a suffix to all names.
+
+1. Then we change all label key/value pairs to app: hello-staging
+
+1. Finally we reference everything to the base folder.
+
+## Continue customisation by merging a new configmap
+
+kube/overlays/staging/kustomization.yaml (continued):
+
+.code kube/overlays/staging/kustomization.yaml /configMapGenerator/,/^$/
+
+1. Here we have changed the MESSAGE of hello-config.
+1. However because of the previous nameSuffix, the kustomized name of the
+ configmap is hello-config-staging.
+
+## Similarly customise by merging a new secret
+
+kube/overlays/staging/kustomization.yaml (continued):
+
+.code kube/overlays/staging/kustomization.yaml /configMapGenerator/,/^$/
+
+## Patch the deployment image
+kube/overlays/staging/kustomization.yaml (continued):
+
+.code kube/overlays/staging/kustomization.yaml /patches/,/^$/
+
+Finally we patch the image with kube/overlays/staging/staging-patches.yaml:
+
+.code kube/overlays/staging/staging-patches.yaml
+
+
+## Apply and test our staging kustomization
+
+```
+kubectl apply -k kube/overlays/staging
+kubectl get svc,pod -l app=hello-staging
+curl 192.168.1.68:{node port}/
+```
+
+Tear down our resources with:
+```
+kubectl delete -k kube/base
+kubectl delete -k kube/overlays/staging
+```
+
+## Take a break: Check that you understand how to Kustomize for different environments.
 
 ## Presentation and code download
+
+kube/overlays/staging/kustomization.yaml:
 
 .link https://github.com/siuyin/present-kubernetes-app-dev-go-skaffold-kustomize

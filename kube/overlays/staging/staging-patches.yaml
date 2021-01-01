@@ -1,0 +1,10 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello
+spec:
+  template:  # pod template follows
+    spec:
+      containers:
+      - name: hello
+        image: siuyin/junk # empty tag defaults to 'latest' tag

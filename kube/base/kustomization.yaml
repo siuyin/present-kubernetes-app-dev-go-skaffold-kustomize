@@ -1,0 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+commonLabels:
+  app: hello
+resources:
+- hello-service.yaml
+- hello-configmap.yaml
+- hello-secrt.yaml
+- hello-deployment-vol.yaml

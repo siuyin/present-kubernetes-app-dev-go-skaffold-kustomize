@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+nameSuffix: -staging
+commonLabels:
+  app: hello-staging
+#resources:    # use resources for v3 and above.
+bases:    # use bases for v2.0.3
+- ../../base
+
+configMapGenerator:
+  - name: hello-config
+    behavior: merge
+    literals:
+    - MESSAGE="staging World from customised staging"
+
+secretGenerator:
+  - name: hello-secret
+    behavior: merge
+    literals:
+    - PASSWORD="AStag1ngPassw00rd!"
+
+patches:
+-  staging-patches.yaml

@@ -18,7 +18,7 @@ func main() {
 	passwd := dflt.EnvString("PASSWORD", "Ag00d.Password!")
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello, %s. My password is %s.\n", msg, passwd)
+		fmt.Fprintf(w, "Greetings, %s. My password is %s.\n", msg, passwd) // changed from "Hello..."
 		displayFileContents(w, dispFile)
 	})
 
