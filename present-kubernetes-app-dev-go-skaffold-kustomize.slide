@@ -548,7 +548,7 @@ kube/overlays/staging/kustomization.yaml (continued):
 
 kube/overlays/staging/kustomization.yaml (continued):
 
-.code kube/overlays/staging/kustomization.yaml /configMapGenerator/,/^$/
+.code kube/overlays/staging/kustomization.yaml /secretGenerator/,/^$/
 
 ## Patch the deployment image
 kube/overlays/staging/kustomization.yaml (continued):
